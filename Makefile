@@ -12,7 +12,7 @@ APP							= alice
 TEST_DIR				= test
 TEST_EBIN_DIR		= $(TEST_DIR)/ebin
 
-all: mochi ebin compile
+all: ebin compile
 all_boot: all boot
 wonderland_boot: wonderland all_boot
 start: all start_all
@@ -21,9 +21,6 @@ rstakeout: wonderland compile
 wonderland:
 	[ -f $(WONDERLAND_DIR)/index.html ] || (mkdir -p $(WEB_DIR) && cd $(WEB_DIR) && git clone git://github.com/auser/wonderland.git)
 	cd $(WONDERLAND_DIR) && git pull origin master
-
-mochi:
-	@(cd deps/mochiweb;$(MAKE))
 
 compile:
 	@$(ERL) -pa $(EBIN_DIRS) -noinput +B -eval 'case make:all() of up_to_date -> halt(0); error -> halt(1) end.'
@@ -50,6 +47,3 @@ $(TEST_EBIN_DIR):
 
 clean:
 	rm -rf ebin/*.beam ebin/erl_crash.dump erl_crash.dump ebin/*.boot ebin/*.rel ebin/*.script 
-
-clean_mochiweb:
-	rm -rf deps/mochiweb/ebin/*.beam

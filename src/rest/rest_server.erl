@@ -11,7 +11,7 @@
 -include ("alice.hrl").
 
 %% API
--export([start_link/1]).
+-export([start_link/1, read_local_resource/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -34,6 +34,14 @@
 start_link(Args) ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [Args], []).
 
+%%--------------------------------------------------------------------
+%% Function: read_local_resource(Name) -> {ok, Binary} | {error, Reason}
+%% Description: Reads a file located relative to the application root
+%%-------------------------------------------------------------------- 
+read_local_resource(Name) ->
+  RootDir = filename:join(filename:dirname(code:which(?MODULE)), ".."),
+  file:read_file(filename:join(RootDir, Name)).
+
 %%====================================================================
 %% gen_server callbacks
 %%====================================================================
@@ -49,19 +57,7 @@ start_link(Args) ->
 init(_Args) ->
   ?INFO("Starting...", []),
 	print_banner(),
-	?INFO("Starting mochiweb", []),
-	Args = lists:map(
-      fun (Var) -> 
-        case application:get_env(alice, Var) of
-          {ok, Value} -> Value;
-          _ -> 
-            {ok, V} = config:get(Var),
-            V
-        end
-      end,
-      [port]),
-  start_mochiweb(Args),
-  ?INFO("Started mochiweb with: ~p~n", [Args]),
+  register_webapp(),
   spawn_link(fun() -> rabint:stay_connected_to_rabbit_node(0) end),
   {ok, #state{}}.
 
@@ -122,7 +118,6 @@ handle_info(_Info, State) ->
 %% The return value is ignored.
 %%--------------------------------------------------------------------
 terminate(_Reason, _State) ->
-  mochiweb_http:stop(),
   ok.
 
 %%--------------------------------------------------------------------
@@ -135,11 +130,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
-start_mochiweb(Args) ->
-  [Port] = Args,
-  io:format("Starting mochiweb_http with ~p~n", [Port]),
-  mochiweb_http:start([ {port, Port},
-                        {loop, fun dispatch_requests/1}]).
+register_webapp() ->
+  rabbit_mochiweb:register_global_handler(fun dispatch_requests/1).
 
 dispatch_requests(Req) ->
   Path = Req:get(path),
@@ -156,7 +148,7 @@ handle(Path, Req) ->
   
   case CAtom of
     home -> 
-      IndexContents = case file:read_file("web/wonderland/index.html") of
+      IndexContents = case read_local_resource("web/wonderland/index.html") of
         {ok, Contents} -> Contents;
         _ -> "
           <html><head>

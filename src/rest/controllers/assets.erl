@@ -10,17 +10,17 @@ get(["templates", Path]) -> {"application/binary", read_template(Path)};
 get(Path) -> {"text/html", "unknown assets path: " ++ Path}.
 
 read_css(Name) ->
-  {ok, Contents} = file:read_file(?WONDERLAND_DIR ++ "css/" ++ Name),
+  {ok, Contents} = rest_server:read_local_resource(?WONDERLAND_DIR ++ "css/" ++ Name),
   Contents.
 
 read_js(Name) ->
-  {ok, Contents} = file:read_file(?WONDERLAND_DIR ++ "js/" ++ Name),
+  {ok, Contents} = rest_server:read_local_resource(?WONDERLAND_DIR ++ "js/" ++ Name),
   Contents.
 
 read_image(Name) ->
-  {ok, Contents} = file:read_file(?WONDERLAND_DIR ++ "images/" ++ Name),
+  {ok, Contents} = rest_server:read_local_resource(?WONDERLAND_DIR ++ "images/" ++ Name),
   Contents.
   
 read_template(Name) ->
-  {ok, Contents} = file:read_file(?WONDERLAND_DIR ++ "templates/" ++ Name),
+  {ok, Contents} = rest_server:read_local_resource(?WONDERLAND_DIR ++ "templates/" ++ Name),
   Contents.
